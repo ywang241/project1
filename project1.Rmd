@@ -1,15 +1,11 @@
 ---
 title: "project1"
-author: "yan"
+author: "Yan Wang"
 date: "2023-09-09"
 output:
   html_document: default
   pdf_document: default
 ---
-```{r}
-usethis::use_git()
-
-```
 
 ```{r setup, include=FALSE}
 library(here)
