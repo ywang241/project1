@@ -1,0 +1,159 @@
+---
+title: "project1"
+author: "yan"
+date: "2023-09-09"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r}
+usethis::use_git()
+
+```
+
+```{r setup, include=FALSE}
+library(here)
+library(tidyverse)
+
+# tests if a directory named "data" exists locally
+if (!dir.exists(here("data"))) {
+    dir.create(here("data"))
+}
+
+# saves data only once (not each time you knit a R Markdown)
+if (!file.exists(here("data", "chocolate.RDS"))) {
+    url_csv <- "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-01-18/chocolate.csv"
+    chocolate <- readr::read_csv(url_csv)
+
+    # save the file to RDS objects
+    saveRDS(chocolate, file = here("data", "chocolate.RDS"))
+}
+chocolate <- readRDS(here("data", "chocolate.RDS"))
+as_tibble(chocolate)
+glimpse(chocolate)
+```
+
+## Part 1: Explore data
+### 1
+
+```{r}
+library(dplyr)
+library(ggplot2)
+qplot(rating, data = chocolate)
+qplot(rating, data = chocolate, bins = 10)
+qplot(rating, data = chocolate, bins = 15)
+qplot(rating, data = chocolate, bins = 20)
+qplot(rating, data = chocolate, bins = 25)
+
+
+```
+### 2
+```{r}
+counties <- group_by(chocolate, country_of_bean_origin)
+summarise(counties)
+```
+### 3
+```{r}
+ecuador <- filter(chocolate, country_of_bean_origin == "Ecuador")
+summarise(ecuador, mean = mean(rating), sd = sd(rating), total = n())
+```
+### 4
+```{r}
+ecuadors <- group_by(ecuador, company_location)
+summarise(ecuadors, quality = mean(rating))
+ecuadorss <- data.frame(summarise(ecuadors, quality = mean(rating)))
+arrange(ecuadorss, desc(quality))
+```
+
+### 5
+```{r}
+country_rate <- group_by(chocolate, country_of_bean_origin)
+summarise(country_rate, rates = mean (rating))
+country_rates <- data.frame(summarise(country_rate, rates = mean (rating)))
+arrange(country_rates, desc(rates))
+```
+### 6
+```{r}
+country_rate <- group_by(chocolate, country_of_bean_origin)
+country_rate1 <- mutate(country_rate, n = n())
+country_rate2 <- filter(country_rate1, n >= 10)
+summarise(country_rate2, mean(rating))
+country_rate3 <- data.frame(summarise(country_rate2, rates3 = mean(rating)))
+arrange(country_rate3, desc(rates3))
+
+```
+
+
+### 7
+```{r}
+country_rate4 <- filter(country_rate1, n >= 50) 
+
+```
+
+
+
+
+## Part 2: Join two datasets together
+```{r}
+library(gapminder)
+library(dplyr)
+newdata <- gapminder
+newdata1 <- select(newdata, 1:2)
+newdata2 <- rename(newdata1, country_of_bean_origin = country)
+chocolate1 <- left_join(x = chocolate, y = newdata2, by = "country_of_bean_origin")
+chocolate2 <- group_by(chocolate1, country_of_bean_origin)
+chocolate3 <- mutate(chocolate2, reviews = n())
+chocolate4 <- filter(chocolate3, reviews >= 10)
+chocolate5 <- subset(chocolate4, country_of_bean_origin!="Blend")
+library(ggplot2)
+ggplot(chocolate5, aes(x = continent, y = rating)) + geom_violin() + labs(x= "continents", y = "ratings")
+```
+
+## Part 3: Convert wide data into long data
+```{r}
+library(dplyr)
+library(tidyr)
+newchocolate <- chocolate %>% mutate(beans = case_when(grepl("B", ingredients) ~ 1, TRUE ~0)) %>% mutate(sugar = case_when(grepl("S", ingredients) ~ 1, TRUE ~0)) %>% mutate(cocoa_butter = case_when(grepl("C", ingredients) ~ 1, TRUE ~0)) %>% mutate(vanilla = case_when(grepl("V", ingredients) ~ 1, TRUE ~0)) %>% mutate(letchin = case_when(grepl("L", ingredients) ~ 1, TRUE ~0)) %>% mutate(salt = case_when(grepl("S", ingredients) ~ 1, TRUE ~0))
+library(stringr)
+newchocolate1 <- newchocolate %>% mutate(char_cocoa = case_when(str_detect(most_memorable_characteristics, "cocoa") ~1, TRUE ~ 0)) %>% mutate(char_sweet = case_when(str_detect(most_memorable_characteristics, "sweet") ~1, TRUE ~ 0)) %>% mutate(char_nutty = case_when(str_detect(most_memorable_characteristics, "nutty") ~1, TRUE ~ 0)) %>% mutate(char_creamy = case_when(str_detect(most_memorable_characteristics, "creamy") ~1, TRUE ~ 0)) %>% mutate(char_roasty = case_when(str_detect(most_memorable_characteristics, "roasty") ~1, TRUE ~ 0)) %>% mutate(char_earthy = case_when(str_detect(most_memorable_characteristics, "earthy") ~1, TRUE ~ 0))
+
+newchocolate2 <- group_by(newchocolate1, review_date)
+summarise(newchocolate2, beansm = mean(beans), sugarm = mean(sugar), cocoa_butterm = (cocoa_butter), vanillam = mean(vanilla), letchinm = mean(letchin), saltm = mean(salt), char_cocoam = mean(char_cocoa), char_sweetm = mean(char_sweet), char_nuttym = mean(char_nutty), char_creamym = mean(char_creamy), char_roastym = mean(char_roasty), char_earthym = mean(char_earthy))
+newchocolate3 <- data.frame(summarise(newchocolate2, beansm = mean(beans), sugarm = mean(sugar), cocoa_butterm = (cocoa_butter), vanillam = mean(vanilla), letchinm = mean(letchin), saltm = mean(salt), char_cocoam = mean(char_cocoa), char_sweetm = mean(char_sweet), char_nuttym = mean(char_nutty), char_creamym = mean(char_creamy), char_roastym = mean(char_roasty), char_earthym = mean(char_earthy)))
+glimpse(newchocolate3)
+newchocolate3 %>% pivot_longer(-review_date, names_to = "feature", values_to = "mean_score")
+newchocolate4 <- tibble(newchocolate3 %>% pivot_longer(-review_date, names_to = "feature", values_to = "mean_score"))
+```
+### Part 4: Data visualization
+```{r}
+library(ggplot2)
+ggplot(newchocolate4, aes(x = review_date, y = mean_score, color = feature)) + geom_point(size = 2) + geom_smooth(method = "loess", formula = "y~x") + labs(title = "Mean Scores Trends Over Time", subtitle = "Letchinm and vanillam decreased over time, others kept normal", caption = "Yan Wang", x= "Review date", y = "Mean score") + theme_minimal() + theme(plot.background = element_rect(fill = "#FFEBCD"), panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "#FFFAF0"), plot.title = element_text(size = 16, face = "bold"),plot.subtitle = element_text(size = 11, face = "italic")) 
+
+```
+
+### Part 5: Make the worst plot you can!
+```{r}
+chocolate %>% ggplot(aes(x = as.factor(country_of_bean_origin), y = rating))
+chocolate %>% ggplot(aes(x = as.factor(country_of_bean_origin), y = rating)) + geom_violin()
+chocolate %>% ggplot(aes(x = as.factor(country_of_bean_origin), y = cocoa_percent))
+qplot(rating, data = chocolate, fill = country_of_bean_origin, binwidth = 2)
+qplot(review_date, cocoa_percent, data = chocolate, color = country_of_bean_origin)
+qplot(review_date, rating, data = chocolate, geom = c("smooth"))
+qplot(country_of_bean_origin, rating, data = chocolate, geom = "boxplot")
+```
+
+### Part 6: Make my plot a better plot!
+```{r}
+
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+
+```{r}
+data = readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-01-18/chocolate.csv')
+```
+
