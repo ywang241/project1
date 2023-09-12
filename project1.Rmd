@@ -101,8 +101,16 @@ chocolate2 <- group_by(chocolate1, country_of_bean_origin)
 chocolate3 <- mutate(chocolate2, reviews = n())
 chocolate4 <- filter(chocolate3, reviews >= 10)
 chocolate5 <- subset(chocolate4, country_of_bean_origin!="Blend")
+chocolate6 <- chocolate5[is.na(chocolate5$continent),] %>%
+mutate(continent = case_when(
+      country_of_bean_origin %in% c('Fiji', 'Papua New Guinea', 'Sao Tome') ~ 'Oceania',
+      country_of_bean_origin %in% c('Congo', 'Solomon Islands') ~ 'Africa',
+      country_of_bean_origin %in% c('Vanuatu') ~ 'Europe',
+      country_of_bean_origin %in% c('Trinidad', 'Grenada', 'St. Lucia') ~ 'Europe',
+      country_of_bean_origin %in% c('U.S.A.', 'Belize') ~ 'Europe'))
+
 library(ggplot2)
-ggplot(chocolate5, aes(x = continent, y = rating)) + geom_violin() + labs(x= "continents", y = "ratings")
+ggplot(chocolate6, aes(x = continent, y = rating)) + geom_violin() + labs(x= "continents", y = "ratings")
 ```
 
 ## Part 3: Convert wide data into long data
@@ -141,15 +149,11 @@ qplot(country_of_bean_origin, rating, data = chocolate, geom = "boxplot")
 ### Part 6: Make my plot a better plot!
 ```{r}
 
+chocolate %>% ggplot(aes(x = as.factor(review_date), y = rating, fill = review_date)) + geom_violin()
+
 ```
 
 
-## Including Plots
 
-You can also embed plots, for example:
-
-
-```{r}
-data = readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-01-18/chocolate.csv')
 ```
 
