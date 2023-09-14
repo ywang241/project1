@@ -1,6 +1,6 @@
 ---
 title: "project1"
-author: "Yan Wang"
+author: "Yan Wang～"
 date: "2023-09-09"
 output:
   html_document: default
