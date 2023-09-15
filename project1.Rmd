@@ -40,54 +40,71 @@ qplot(rating, data = chocolate, bins = 10)
 qplot(rating, data = chocolate, bins = 15)
 qplot(rating, data = chocolate, bins = 20)
 qplot(rating, data = chocolate, bins = 25)
-
-
 ```
+
+#### Answer: When I change the number of bins from 10, to 15, 20, 25, and default (30), these bars become more separately and bin size becomes more narrower, which, in my opinion, would be helpful to identify the characteristics in the data. I picked 25 because it shows these bars clealry and at the same time, the distribution of data is also clealy displayed.
+
 ### 2
 ```{r}
 counties <- group_by(chocolate, country_of_bean_origin)
-summarise(counties)
+count(counties)
 ```
+#### Answer: There are total 62 countries where the beans originated from. The total reviews for each country of bean origin are displayed in the tibble above. For example, Australia has 3 reviews, Belize has 76 reviews, etc.
+
 ### 3
 ```{r}
 ecuador <- filter(chocolate, country_of_bean_origin == "Ecuador")
-summarise(ecuador, mean = mean(rating), sd = sd(rating), total = n())
+ecuador1 <- data.frame(summarise(ecuador, mean = mean(rating), sd = sd(rating), total = n()))
+ecuador1
 ```
+#### Answer: The average rating scores, the total number of reviews, and the standard deviation of the rating scores are 3.16, 219, and 0.51 respectively.
+
 ### 4
 ```{r}
-ecuadors <- group_by(ecuador, company_location)
-summarise(ecuadors, quality = mean(rating))
+ecuadors <- group_by(ecuador, specific_bean_origin_or_bar_name)
 ecuadorss <- data.frame(summarise(ecuadors, quality = mean(rating)))
 arrange(ecuadorss, desc(quality))
 ```
+#### Answer: Corona Arriba, Guayas, Porcelana, Sorotaima,Machiques,batch pcl001, Rio Peripa H., and Tangaramake the best chocolate with beans from Ecuador.
 
 ### 5
 ```{r}
 country_rate <- group_by(chocolate, country_of_bean_origin)
-summarise(country_rate, rates = mean (rating))
 country_rates <- data.frame(summarise(country_rate, rates = mean (rating)))
 arrange(country_rates, desc(rates))
 ```
+#### Answer: The top 3 countries with the highest ratings on average are Tobago, China, and Sao Tome & Principe.
+
 ### 6
 ```{r}
-country_rate <- group_by(chocolate, country_of_bean_origin)
 country_rate1 <- mutate(country_rate, n = n())
 country_rate2 <- filter(country_rate1, n >= 10)
-summarise(country_rate2, mean(rating))
 country_rate3 <- data.frame(summarise(country_rate2, rates3 = mean(rating)))
 arrange(country_rate3, desc(rates3))
-
 ```
-
+#### Answer: Solomon Islands, Congo, and Cuba have the highest ratings on average after removing countries of bean origins that have less than 10 reviews.
 
 ### 7
 ```{r}
+library(dplyr)
+library(tidyr)
+library(lubridate)
 country_rate4 <- filter(country_rate1, n >= 50) 
+country_rate6 <- mutate(country_rate4, percentage = case_when(
+  cocoa_percent < 60 ~ "<60%",
+  cocoa_percent >= 60 & cocoa_percent < 70 ~ ">=60 to <70%", 
+  cocoa_percent >= 70 & cocoa_percent < 90 ~ ">=70 to <90%",
+  cocoa_percent >= 90 ~ ">=90%"
+) )
+library(forcats)
+country_rate6$percentage <- fct_relevel(country_rate6$percentage, "<60%", ">=60 to <70%", ">=70 to <90%", ">=90%")
+country_rate7 <- country_rate6[, c("percentage", setdiff(names(country_rate6), "percentage"))]
+country_rate8 <- data.frame(arrange(country_rate7, percentage))
+ggplot(country_rate8, aes(x = percentage, y = rating)) + geom_boxplot() + facet_wrap(~country_of_bean_origin)
 
 ```
 
-
-
+#### Answer: From the boxplots displayed above, chocolate percentage within "60%~90%" seems most highly rated. Most countries agree with the rating.
 
 ## Part 2: Join two datasets together
 ```{r}
@@ -107,7 +124,7 @@ mutate(continent = case_when(
       country_of_bean_origin %in% c('Congo', 'Solomon Islands') ~ 'Africa',
       country_of_bean_origin %in% c('Vanuatu') ~ 'Europe',
       country_of_bean_origin %in% c('Trinidad', 'Grenada', 'St. Lucia') ~ 'Europe',
-      country_of_bean_origin %in% c('U.S.A.', 'Belize') ~ 'Europe'))
+      country_of_bean_origin %in% c('U.S.A.', 'Belize') ~ 'Americas'))
 
 library(ggplot2)
 ggplot(chocolate6, aes(x = continent, y = rating)) + geom_violin() + labs(x= "continents", y = "ratings")
@@ -148,8 +165,16 @@ qplot(country_of_bean_origin, rating, data = chocolate, geom = "boxplot")
 
 ### Part 6: Make my plot a better plot!
 ```{r}
+remotes::install_github("MatthewBJane/theme_park")
 
-chocolate %>% ggplot(aes(x = as.factor(review_date), y = rating, fill = review_date)) + geom_violin()
+glimpse(newchocolate4)
+newchocolate4 %>% ggplot(aes(x = review_date, y = mean_score, fill = feature)) + geom_violin()
+newchocolate4 %>% ggplot(aes(x = review_date, y = mean_score, colour = feature)) + geom_point()
+newchocolate4 %>% ggplot(aes(mean_score, colour = feature)) + geom_histogram()
+newchocolate4 %>% ggplot(aes(x = review_date, y = mean_score, colour = feature)) + geom_point() + facet_wrap(~feature)
+newchocolate4 %>% ggplot(aes(mean_score, colour = feature)) + geom_freqpoly() + facet_wrap(~feature)
+chocolate6 %>% ggplot(aes(x = continent, y = rating, colour = continent)) + geom_boxplot() + theme_minimal() + ThemePark::theme_oppenheimer()
+chocolate6 %>% ggplot(aes(x = continent, y = rating, colour = continent)) + geom_jitter() + ThemePark::theme_barbie()
 
 ```
 
