@@ -1,5 +1,5 @@
 ---
-title: "project1"
+title: "Project1"
 author: "Yan Wang"
 date: "2023-09-09"
 output:
@@ -47,7 +47,8 @@ qplot(rating, data = chocolate, bins = 25)
 ### 2
 ```{r}
 counties <- group_by(chocolate, country_of_bean_origin)
-count(counties)
+tibble <- count(counties)
+print(tibble)
 ```
 #### Answer: There are total 62 countries where the beans originated from. The total reviews for each country of bean origin are displayed in the tibble above. For example, Australia has 3 reviews, Belize has 76 reviews, etc.
 
@@ -101,7 +102,6 @@ country_rate6$percentage <- fct_relevel(country_rate6$percentage, "<60%", ">=60 
 country_rate7 <- country_rate6[, c("percentage", setdiff(names(country_rate6), "percentage"))]
 country_rate8 <- data.frame(arrange(country_rate7, percentage))
 ggplot(country_rate8, aes(x = percentage, y = rating)) + geom_boxplot() + facet_wrap(~country_of_bean_origin)
-
 ```
 
 #### Answer: From the boxplots displayed above, chocolate percentage within "60%~90%" seems most highly rated. Most countries agree with the rating.
@@ -125,8 +125,6 @@ mutate(continent = case_when(
       country_of_bean_origin %in% c('Vanuatu') ~ 'Europe',
       country_of_bean_origin %in% c('Trinidad', 'Grenada', 'St. Lucia') ~ 'Europe',
       country_of_bean_origin %in% c('U.S.A.', 'Belize') ~ 'Americas'))
-
-library(ggplot2)
 ggplot(chocolate6, aes(x = continent, y = rating)) + geom_violin() + labs(x= "continents", y = "ratings")
 ```
 
@@ -134,21 +132,19 @@ ggplot(chocolate6, aes(x = continent, y = rating)) + geom_violin() + labs(x= "co
 ```{r}
 library(dplyr)
 library(tidyr)
-newchocolate <- chocolate %>% mutate(beans = case_when(grepl("B", ingredients) ~ 1, TRUE ~0)) %>% mutate(sugar = case_when(grepl("S", ingredients) ~ 1, TRUE ~0)) %>% mutate(cocoa_butter = case_when(grepl("C", ingredients) ~ 1, TRUE ~0)) %>% mutate(vanilla = case_when(grepl("V", ingredients) ~ 1, TRUE ~0)) %>% mutate(letchin = case_when(grepl("L", ingredients) ~ 1, TRUE ~0)) %>% mutate(salt = case_when(grepl("S", ingredients) ~ 1, TRUE ~0))
+newchocolate <- chocolate %>% mutate(beans = case_when(grepl("B", ingredients) ~ 1, TRUE ~ 0)) %>% mutate(sugar = case_when(grepl("S", ingredients) ~ 1, TRUE ~ 0)) %>% mutate(cocoa_butter = case_when(grepl("C", ingredients) ~ 1, TRUE ~ 0)) %>% mutate(vanilla = case_when(grepl("V", ingredients) ~ 1, TRUE ~ 0)) %>% mutate(letchin = case_when(grepl("L", ingredients) ~ 1, TRUE ~ 0)) %>% mutate(salt = case_when(grepl("Sa", ingredients) ~ 1, TRUE ~ 0))
 library(stringr)
 newchocolate1 <- newchocolate %>% mutate(char_cocoa = case_when(str_detect(most_memorable_characteristics, "cocoa") ~1, TRUE ~ 0)) %>% mutate(char_sweet = case_when(str_detect(most_memorable_characteristics, "sweet") ~1, TRUE ~ 0)) %>% mutate(char_nutty = case_when(str_detect(most_memorable_characteristics, "nutty") ~1, TRUE ~ 0)) %>% mutate(char_creamy = case_when(str_detect(most_memorable_characteristics, "creamy") ~1, TRUE ~ 0)) %>% mutate(char_roasty = case_when(str_detect(most_memorable_characteristics, "roasty") ~1, TRUE ~ 0)) %>% mutate(char_earthy = case_when(str_detect(most_memorable_characteristics, "earthy") ~1, TRUE ~ 0))
-
 newchocolate2 <- group_by(newchocolate1, review_date)
-summarise(newchocolate2, beansm = mean(beans), sugarm = mean(sugar), cocoa_butterm = (cocoa_butter), vanillam = mean(vanilla), letchinm = mean(letchin), saltm = mean(salt), char_cocoam = mean(char_cocoa), char_sweetm = mean(char_sweet), char_nuttym = mean(char_nutty), char_creamym = mean(char_creamy), char_roastym = mean(char_roasty), char_earthym = mean(char_earthy))
 newchocolate3 <- data.frame(summarise(newchocolate2, beansm = mean(beans), sugarm = mean(sugar), cocoa_butterm = (cocoa_butter), vanillam = mean(vanilla), letchinm = mean(letchin), saltm = mean(salt), char_cocoam = mean(char_cocoa), char_sweetm = mean(char_sweet), char_nuttym = mean(char_nutty), char_creamym = mean(char_creamy), char_roastym = mean(char_roasty), char_earthym = mean(char_earthy)))
-glimpse(newchocolate3)
 newchocolate3 %>% pivot_longer(-review_date, names_to = "feature", values_to = "mean_score")
 newchocolate4 <- tibble(newchocolate3 %>% pivot_longer(-review_date, names_to = "feature", values_to = "mean_score"))
+print(newchocolate4)
 ```
 ### Part 4: Data visualization
 ```{r}
 library(ggplot2)
-ggplot(newchocolate4, aes(x = review_date, y = mean_score, color = feature)) + geom_point(size = 2) + geom_smooth(method = "loess", formula = "y~x") + labs(title = "Mean Scores Trends Over Time", subtitle = "Letchinm and vanillam decreased over time, others kept normal", caption = "Yan Wang", x= "Review date", y = "Mean score") + theme_minimal() + theme(plot.background = element_rect(fill = "#FFEBCD"), panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "#FFFAF0"), plot.title = element_text(size = 16, face = "bold"),plot.subtitle = element_text(size = 11, face = "italic")) 
+ggplot(newchocolate4, aes(x = review_date, y = mean_score, color = feature)) + geom_point(size = 1) + geom_smooth(method = "loess", formula = "y~x") + labs(title = "Mean Scores Trends Over Time", subtitle = "The mean scores of letchinm and vanillam decreasing over time, others maintaining stable", caption = "Yan Wang", x= "Review date", y = "Mean score") + theme_minimal() + theme(plot.background = element_rect(fill = "#FFEBCD"), panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "#FFFAF0"), plot.title = element_text(size = 16, face = "bold"),plot.subtitle = element_text(size = 11, face = "italic"), legend.position = "right", legend.text = element_text(size = 8), legend.title = element_text(size = 10)) 
 
 ```
 
@@ -163,14 +159,23 @@ qplot(review_date, rating, data = chocolate, geom = c("smooth"))
 qplot(country_of_bean_origin, rating, data = chocolate, geom = "boxplot")
 ```
 
+
+#### Answer:
+##### 1. It suggests that points should be displayed clearly and easy to understand at a glance. Clutter should be avoided.  
+##### 2. It suggests that I should choose the right type of graphs to best represent the data.
+##### 3. It suggests that I should design the x-axis and y-axis properly.
+##### 4. It suggests that I should focus on visualizing the most meaningful aspects of the data.
+##### 5. It suggests that removing any unnecessary elements is important.
+##### 6. It suggests that providing clear labels for axes, data points, title, etc are important and meaningful.
+##### 7. It suggests that choosing the proper graphs and showing the most relevent information of the data is necessary.
+
 ### Part 6: Make my plot a better plot!
 ```{r}
 remotes::install_github("MatthewBJane/theme_park")
-
 glimpse(newchocolate4)
 newchocolate4 %>% ggplot(aes(x = review_date, y = mean_score, fill = feature)) + geom_violin()
-newchocolate4 %>% ggplot(aes(x = review_date, y = mean_score, colour = feature)) + geom_point()
-newchocolate4 %>% ggplot(aes(mean_score, colour = feature)) + geom_histogram()
+newchocolate4 %>% ggplot(aes(x = review_date, y = mean_score, colour = feature)) + geom_point() + theme_minimal() + theme(plot.background = element_rect(fill = "#FFdBCD"), panel.background = element_rect(fill = "white"), panel.grid.major = element_line(color = "#FFaAF0"))
+newchocolate4 %>% ggplot(aes(mean_score, colour = feature)) + geom_histogram() + labs(title = "Mean Scores of different features", subtitle = "Most features falling in lower socres", x= "Mean scores")
 newchocolate4 %>% ggplot(aes(x = review_date, y = mean_score, colour = feature)) + geom_point() + facet_wrap(~feature)
 newchocolate4 %>% ggplot(aes(mean_score, colour = feature)) + geom_freqpoly() + facet_wrap(~feature)
 chocolate6 %>% ggplot(aes(x = continent, y = rating, colour = continent)) + geom_boxplot() + theme_minimal() + ThemePark::theme_oppenheimer()
@@ -178,7 +183,13 @@ chocolate6 %>% ggplot(aes(x = continent, y = rating, colour = continent)) + geom
 
 ```
 
+#### Answer:
+##### 1. I fill each "violin" with different colors, making the graph visually appealing and meaningful.
+##### 2. I change the theme by increasing the panel background, plot background, and panel grid, which makes it more beautiful.
+##### 3. I add the title, subtitle, and x axis labers, making it more clear to understand.
+##### 4. I make the graph divided into 12 panels according to features, making it easier to find the different tendencies over time between different features.
+##### 5. I choose using "geom_freqpoly()" to show the characteristics of the data, which makes it more obvious. 
+##### 6. I choose using "boxplot" to show the characteristics of data, making it more easier to compare the distribution between different continents. Also, I use the "oppenheimer" theme to make it look cool.
+##### 7. I change the theme to "Barbie them", and change the typer of graph. Compared to boxplot, "jitter" could show individual values, which is useful when I focus on the individual values, rather than group values.
 
-
-```
 
